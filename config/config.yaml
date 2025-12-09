@@ -1,0 +1,40 @@
+# config/config.yaml
+defaults:
+  - _self_
+
+data:
+  data_path: "./dataset"
+  data_file: ${data.data_path}/xxx_v0_feats.npy
+  gt_file: ${data.data_path}/xxx_v0_data.parquet
+  split_size: 0.05
+  input_type: 'img' # ['feat', 'img']
+  input_size: 112
+  input_dim: 1024
+
+model:
+  model_name: 'QualityRegressorHeder' # ['QualityRegressorHeder', 'FaceQualityModel']
+  backbone: 'mobilenet_v3_small' # ['mobilenet_v3_small', 'squeezenet']
+  input_size: 112
+  pretrained: True
+  freeze_backbone: False
+
+trainer:
+  batchsize: 256 # 256, 16384
+  num_epoch: 100
+  optimizer: adam
+  momentum: 0.9
+  weight_decay: 1e-5
+  max_lr: 1e-4
+  scheduler:
+    name: 'cosine_with_warmup'
+    warmup_epochs: 5
+    warmup_lr_init: 1e-5
+    eta_min: 1e-6
+
+project:
+  name: "face_quality"
+  info: "MSELoss"
+
+hydra:
+  run:
+    dir: ./outputs/${project.name}/${now:%Y-%m-%d}/${now:%H-%M-%S}
