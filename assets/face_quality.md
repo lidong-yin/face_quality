@@ -1,6 +1,8 @@
 ## 1. SDD: Face Image Quality Assessment (FIQA)
 
-![sdd-fiqa](sdd-fiqa.png 'sdd-fiqa')
+<div align="center">
+  <img src="sdd-fiqa.png" alt="sdd-fiqa" width="400">
+</div>
 
 作者引用了EVRC(误差拒绝曲线)的原理，受其启发，提出通过FNMR(错误匹配率)的下降程度来定义图像质量的伪标签。
 
@@ -11,7 +13,11 @@
 主要用韦氏距离来衡量两个分布之间的距离大小，作为质量评分。
 
 ## 2. CR-FIQA: Face Image Quality Assessment by Learning...
-![cr-fiqa](cr-fiqa.png 'cr-fiqa')
+
+<div align="center">
+  <img src="cr-fiqa.png" alt="cr-fiqa" width="400">
+</div>
+
 这篇论文也不难理解，从上一篇的SDD实验也能推出来这种想法。仔细观察SDD的方法，负样本其实是不起作用的，对于一个10万或100万的数据集来讲，负样本对基本退化为一致的分布，所以此时计算距离的唯一变量是正样本对之间的距离。
 
 CR-FIQA的度量方法主要和簇的中心有关。

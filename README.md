@@ -25,7 +25,7 @@ This repository contains the code for the paper "SDD-FIQA: Unsupervised Face Ima
   ```
   
 
-**注意**：生成伪标签的好坏和数据有较强的相关性，详细参考: 
+**注意**：生成伪标签的好坏和数据有较强的相关性，详细参考: [face_quality](./assets/face_quality.md)
 
 ### 2. 训练模型
 ```python
