@@ -30,47 +30,87 @@ class FaceQualityModel(nn.Module):
     '''
     def __init__(self, pretrained=True, freeze_backbone=False, dropout_prob=0.5, backbone='mobilenet_v3_small'):
         super(FaceQualityModel, self).__init__()
-        # backbone
+        
         if pretrained:
-            # 预训练权重 torchvision 0.13后更新 为weights 传参
-            if backbone == 'mobilenet_v3_small':
-                weights = models.MobileNet_V3_Small_Weights.DEFAULT
-            elif backbone == 'efficientnet_b0':
-                weights = models.EfficientNet_B0_Weights.DEFAULT
-            elif backbone == "squeezenet":
-                weights = models.SqueezeNet1_1_Weights.DEFAULT
-            else:
-                raise ValueError(f"Unsupported backbone: {backbone}")
+            weights_mapping = {
+                'mobilenet_v3_small': models.MobileNet_V3_Small_Weights.DEFAULT,
+                'mobilenet_v3_large': models.MobileNet_V3_Large_Weights.DEFAULT,
+                'efficientnet_b0': models.EfficientNet_B0_Weights.DEFAULT,
+                'efficientnet_b1': models.EfficientNet_B1_Weights.DEFAULT,
+                'efficientnet_b2': models.EfficientNet_B2_Weights.DEFAULT,
+                'resnet18': models.ResNet18_Weights.DEFAULT,
+                'resnet34': models.ResNet34_Weights.DEFAULT,
+                'densenet121': models.DenseNet121_Weights.DEFAULT,
+                'shufflenet_v2_x1_0': models.ShuffleNet_V2_X1_0_Weights.DEFAULT,
+                'regnet_y_400mf': models.RegNet_Y_400MF_Weights.DEFAULT,
+                'regnet_y_800mf': models.RegNet_Y_800MF_Weights.DEFAULT,
+            }
+            weights = weights_mapping.get(backbone)
         else:
             weights = None
-
+        
+        # 初始化backbone
         if backbone == 'mobilenet_v3_small':
             self.backbone = models.mobilenet_v3_small(weights=weights)
             in_features = self.backbone.classifier[0].in_features
-            self.backbone.classifier = nn.Identity() # 移除原始的分类头
-        elif backbone == 'efficientnet_b0':
-            self.backbone = models.efficientnet_b0(weights=weights)
+            self.backbone.classifier = nn.Identity()
+            
+        elif backbone == 'mobilenet_v3_large':
+            self.backbone = models.mobilenet_v3_large(weights=weights)
+            in_features = 960
+            self.backbone.classifier = nn.Identity()
+            
+        elif backbone.startswith('efficientnet'):
+            if backbone == 'efficientnet_b0':
+                self.backbone = models.efficientnet_b0(weights=weights)
+            elif backbone == 'efficientnet_b1':
+                self.backbone = models.efficientnet_b1(weights=weights)
+            elif backbone == 'efficientnet_b2':
+                self.backbone = models.efficientnet_b2(weights=weights)
             in_features = self.backbone.classifier[1].in_features
             self.backbone.classifier = nn.Identity()
-        elif backbone == "squeezenet":
-            self.backbone = models.squeezenet1_1(weights=weights)
-            in_features = 512 # SqueezeNet 1.1 的最终输出通道数是 512, 移除它的分类器
-            self.backbone.classifier = nn.Sequential(
+            
+        elif backbone in ['resnet18', 'resnet34']:
+            if backbone == 'resnet18':
+                self.backbone = models.resnet18(weights=weights)
+            else:
+                self.backbone = models.resnet34(weights=weights)
+            in_features = 512
+            self.backbone.fc = nn.Identity()
+            
+        elif backbone == 'densenet121':
+            self.backbone = models.densenet121(weights=weights)
+            in_features = 1024
+            self.backbone.classifier = nn.Identity()
+            
+        elif backbone == 'shufflenet_v2_x1_0':
+            self.backbone = models.shufflenet_v2_x1_0(weights=weights)
+            in_features = 1024
+            self.backbone.fc = nn.Sequential(
                 nn.AdaptiveAvgPool2d((1, 1)),
                 nn.Flatten()
             )
+            
+        elif backbone.startswith('regnet'):
+            if backbone == 'regnet_y_400mf':
+                self.backbone = models.regnet_y_400mf(weights=weights)
+                in_features = 440
+            elif backbone == 'regnet_y_800mf':
+                self.backbone = models.regnet_y_800mf(weights=weights)
+                in_features = 784
+            self.backbone.fc = nn.Identity()
+            
         else:
-            raise ValueError("Unsupported backbone: {self.backbone}")
-
+            raise ValueError(f"Unsupported backbone: {backbone}")
+        
         if freeze_backbone:
             for param in self.backbone.parameters():
                 param.requires_grad = False
-
+        
         # header
         self.header = QualityRegressorHeder(input_dim=in_features, dropout_prob=dropout_prob)
-        
+    
     def forward(self, image):
         features = self.backbone(image)
         quality_score = self.header(features)
-        
         return quality_score
